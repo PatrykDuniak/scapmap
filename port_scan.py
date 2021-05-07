@@ -10,23 +10,6 @@ from scapy.compat import raw
 from scapy.volatile import RandShort
 
 
-
-#https://nmap.org/man/pl/man-port-scanning-techniques.html
-
-#Tcp Flags
-#Urgent Pointer 32
-#ACK            16
-#Push            8
-#Reset           4
-#SYN             2
-#FIN             1
-
-#ICMPcode
-#0 - echo reply
-#3 - destination unreachable
-#8 - echo request
-
-
 def ping(targets):
     print("ICMP ping on: %s" %(targets))
     ans = sr1(IP(dst=targets)/ICMP(), verbose=False)
@@ -51,7 +34,7 @@ def tcp_calc_flag(set_flags):
 
     return flag_value
 
-def scan_tcp_syn(ans, targets, ports):
+def scan_tcp_syn(ans):
     
     if ans == None:
         return 'Filtered'
@@ -68,7 +51,7 @@ def scan_tcp_syn(ans, targets, ports):
     else:
         return 'Error'
         
-def scan_tcp_null_fin_xmas(ans, targets, ports):
+def scan_tcp_null_fin_xmas(ans):
 
     if ans == None:
         return 'Port open OR filtered'
@@ -82,7 +65,7 @@ def scan_tcp_null_fin_xmas(ans, targets, ports):
     else:
         return 'Error'
     
-def scan_tcp_ack(ans, targets, ports):
+def scan_tcp_ack(ans):
 
     if ans == None:
         return 'Filtered'
@@ -96,7 +79,7 @@ def scan_tcp_ack(ans, targets, ports):
     else:
         return 'Error'
 
-def scan_tcp_window(ans, targets, ports):
+def scan_tcp_window(ans):
 
     if ans == None:
         return 'Filtered'
@@ -115,7 +98,7 @@ def scan_tcp_window(ans, targets, ports):
     else:
         return 'Error'
     
-def scan_tcp_maimon(ans, targets, ports):
+def scan_tcp_maimon(ans):
 
     if ans == None:
         return 'Port open OR filtered'
@@ -128,7 +111,6 @@ def scan_tcp_maimon(ans, targets, ports):
 
     else:
         return 'Error'
-
 
 def scan_tcp(targets, ports, type_scan, set_flags):
     
@@ -143,19 +125,12 @@ def scan_tcp(targets, ports, type_scan, set_flags):
     
     print("Scan TCP %s on: %s:%s" %(type_scan, targets, ports))
 
-    #if ping(targets) != 0:
-        #return 'Not responding'
-
     source_port=RandShort()
     ans = sr1(IP(dst=targets)/TCP(sport=source_port, dport=ports, flags=pick.get(type_scan)[1]),timeout=1, verbose=False)
     return pick[type_scan][0](ans, targets, ports)
-    
 
 def scan_udp(targets, ports):
     print("Scan UDP on: %s:%s" %(targets, ports))
-    
-    #if ping(targets) != 0:
-        #return 'Not responding'
     
     source_port=RandShort()
     ans = sr1(IP(dst=targets)/UDP(sport=source_port, dport=ports),timeout=1, verbose=False)
@@ -175,6 +150,13 @@ def scan_udp(targets, ports):
     else:
         return 'Filtered'
 
+def scan_tcp_protocol(targets, ports): #https://www.eit.lth.se/ppplab/IPHeader.htm
+    print("Scan TCP Protocol on: %s:%s" %(targets, ports))
+    
+    ans = sr1(IP(dst=targets, proto=(0, 255)),timeout=1, verbose=False)
+
+    ans.show()
+    
 
 
 if __name__ == "__main__":
@@ -184,7 +166,7 @@ if __name__ == "__main__":
     type_scan='FIN'
     set_flags='A'
 
-    print(scan_tcp(targets, ports, type_scan, set_flags))
+    print(scan_tcp_protocol(targets, ports))
 
 
 #https://nmap.org/man/pl/man-port-scanning-techniques.html
