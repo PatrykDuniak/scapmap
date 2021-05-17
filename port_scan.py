@@ -1,5 +1,3 @@
-import sys
-import time   
 import logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.layers.inet import IP, UDP, TCP, ICMP, report_ports, IPTools
@@ -38,7 +36,7 @@ class IPinterpreter():
         self._targets.append('.'.join(self._targets[0:3])+'.'+self.__scope_value[1])
         self._targets=self._targets[-2:]
         return self._targets
-            
+
     def __subnetCalc(self):
         subnets=[]
         ip_range=['','']
@@ -76,7 +74,7 @@ class IPinterpreter():
 
         self._targets=ip_range
         return self._targets
-        
+
     def __ipchecker(self):
         test=self._targets
         if test.count('.')!=3:
@@ -119,9 +117,6 @@ class IPinterpreter():
                 except:
                     print('Propably not number')
                     exit()
-
-
-
 
 
 class PortScanner(IPinterpreter):
@@ -184,12 +179,12 @@ class PortScanner(IPinterpreter):
     def __portFor(self):
         self.__portInterpreter()
         temp_list=self.__ports
-        scan_type = { 'TCP' : self.scan_tcp, 'UDP' : self.scan_udp, 'IP' : self.scan_ip_protocol, 'Custom' : self.scan_tcp_custom}
+        scan_type = { 'TCP' : self.__scan_tcp, 'UDP' : self.__scan_udp, 'IP' : self.__scan_ip_protocol, 'Custom' : self.__scan_tcp_custom}
         
         if type(self.__ports) == int:
             scan_type.get(self.__type_scan)()
         elif self.__ports[-1] == True:
-            for port in range(temp_list[0], temp_list[1]):
+            for port in range(temp_list[0], temp_list[1]+1):
                 self.__ports=port
                 scan_type.get(self.__type_scan)()
         elif self.__ports[-1] == False:
@@ -209,14 +204,17 @@ class PortScanner(IPinterpreter):
                 16: ['ACK', 'A'],
                 32: ['URG', 'U']}
 
-        for word in self.__set_flags.split(' '):
-            for item in flags.items():
-                if(word in item[1]):
-                    flag_value+=item[0]
+        try:
+            for word in self.__set_flags.split(' '):
+                for item in flags.items():
+                    if(word in item[1]):
+                        flag_value+=item[0]
+        except:
+            print('Wrong flags')
 
         return flag_value
 
-    def scan_tcp(self):
+    def __scan_tcp(self):
         pick={'SYN' : 2,  'Null' : 0, 'FIN' : 1, 'Xmas' : 41,
               'ACK' : 16, 'Window' : 16,  'Maimon' : 17}
         
@@ -239,7 +237,7 @@ class PortScanner(IPinterpreter):
             else:
                 print('Filtered, ICMP unreachable error')
 
-    def scan_udp(self):
+    def __scan_udp(self):
         print("Scan UDP on: %s:%s" %(self._targets, self.__ports))
         
         source_port=RandShort()
@@ -260,7 +258,7 @@ class PortScanner(IPinterpreter):
         else:
             print('Filtered')
 
-    def scan_ip_protocol(self): #https://www.eit.lth.se/ppplab/IPHeader.htm
+    def __scan_ip_protocol(self): #https://www.eit.lth.se/ppplab/IPHeader.htm
         print("Scan IP Protocol on: %s" %(self._targets))
 
         for x in range (0, 255):
@@ -281,7 +279,7 @@ class PortScanner(IPinterpreter):
             else:
                 print('Protocol open')
 
-    def scan_tcp_custom(self):
+    def __scan_tcp_custom(self):
         flag_value=self.__tcp_calc_flag()
         source_port=RandShort()
         ans=sr1(IP(dst=self._targets)/TCP(sport=source_port, dport=self.__ports, flags=flag_value),timeout=2, retry=2, verbose=False)
@@ -293,7 +291,6 @@ class PortScanner(IPinterpreter):
 
     def scanner(self):
         base=''
-        scan_type = { 'TCP' : self.scan_tcp, 'UDP' : self.scan_udp, 'IP' : self.scan_ip_protocol, 'Custom' : self.scan_tcp_custom}
         self._targets=range_ip=self.IPcalc()
         if type(range_ip) == str:
             self.__portFor()
@@ -342,7 +339,7 @@ if __name__ == "__main__":
 
 
 
-    
+
 #https://nmap.org/man/pl/man-port-scanning-techniques.html
 
 #Tcp Flags
