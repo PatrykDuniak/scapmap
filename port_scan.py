@@ -149,6 +149,57 @@ class PortScanner(IPinterpreter):
         self.__set_flags = set_flags
         self.__type_tcp = type_tcp
 
+    def __portInterpreter(self):
+        if '-' in self.__ports:
+            self.__ports=self.__ports.split('-')
+            try:
+                self.__ports = list(map(int, self.__ports))
+            except:
+                print('Propably not number')
+                exit()
+            if (self.__ports[0] <= self.__ports[1] and ((self.__ports[0] in range(0, 65535)) and (self.__ports[1] in range(0, 65535)))):
+                self.__ports.append(True)
+            else:
+                print('Wrong ports range')
+                exit()
+        elif ',' in self.__ports:
+            self.__ports=self.__ports.split(',')
+            try:
+                self.__ports = list(map(int, self.__ports))
+            except:
+                print('Propably not number')
+                exit()
+            for check in self.__ports:
+                if check not in range(0, 65535):
+                    print('Wrong ports range format')
+                    exit()
+            self.__ports.append(False)
+        else:
+            try:
+                self.__ports=int(self.__ports)
+            except:
+                print('Wrong ports range format')
+                exit()
+
+    def __portFor(self):
+        self.__portInterpreter()
+        temp_list=self.__ports
+        scan_type = { 'TCP' : self.scan_tcp, 'UDP' : self.scan_udp, 'IP' : self.scan_ip_protocol, 'Custom' : self.scan_tcp_custom}
+        
+        if type(self.__ports) == int:
+            scan_type.get(self.__type_scan)()
+        elif self.__ports[-1] == True:
+            for port in range(temp_list[0], temp_list[1]):
+                self.__ports=port
+                scan_type.get(self.__type_scan)()
+        elif self.__ports[-1] == False:
+            for port in temp_list[:-1]:
+                self.__ports=port
+                scan_type.get(self.__type_scan)()
+        else:
+            print('Error')
+            exit()
+
     def __tcp_calc_flag(self):
         flag_value=0
         flags= {1 : ['FIN', 'F'],
@@ -245,7 +296,7 @@ class PortScanner(IPinterpreter):
         scan_type = { 'TCP' : self.scan_tcp, 'UDP' : self.scan_udp, 'IP' : self.scan_ip_protocol, 'Custom' : self.scan_tcp_custom}
         self._targets=range_ip=self.IPcalc()
         if type(range_ip) == str:
-            scan_type.get(self.__type_scan)()
+            self.__portFor()
         else:
             range_ip[0] = range_ip[0].split('.')
             range_ip[1] = range_ip[1].split('.')
@@ -256,7 +307,7 @@ class PortScanner(IPinterpreter):
                     if oct == 3:
                         for ip in range(int(range_ip[0][oct]), int(range_ip[1][oct])+1):
                             self._targets=range_ip[0][0]+'.'+range_ip[0][1]+'.'+range_ip[0][2]+'.'+str(ip)
-                            scan_type.get(self.__type_scan)()
+                            self.__portFor()
                     else:
                         for set in range(0, oct):
                                 base+=range_ip[0][set]+'.'
@@ -266,26 +317,27 @@ class PortScanner(IPinterpreter):
                                     for y in range(1, 255):
                                         for z in range(1, 255):
                                             self._targets=str(ip)+'.'+str(x)+'.'+str(y)+'.'+str(z)
-                                            scan_type.get(self.__type_scan)()
+                                            self.__portFor()
                             elif base.count('.')==1:
                                 for x in range(1, 255):
                                     for y in range(1, 255):
                                         self._targets=base+str(ip)+'.'+str(x)+'.'+str(y)
-                                        scan_type.get(self.__type_scan)
+                                        self.__portFor()
                             else:
                                 for x in range(1, 255):
                                     self._targets=base+str(ip)+'.'+str(x)
-                                    scan_type.get(self.__type_scan)()
+                                    self.__portFor()
 
    
 if __name__ == "__main__":
-    targets="192.168.1.1/32"
-    ports=80
+    targets="192.168.1.3"
+    ports='23-80'
     type_scan="TCP"
     set_flags="A"
 
     port_scanner = PortScanner(targets, ports, type_scan)
     port_scanner.scanner()
+   
 
 
 
