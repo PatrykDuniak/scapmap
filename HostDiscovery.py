@@ -24,14 +24,19 @@ class HostDiscovery(IPinterpreter):
                 print('Brak odpowiedzi')
             else:
                 answer[DNS].show()
-            
-        
+
+    def just_ping(self):
+        print("Ping on %s" %(self._targets))
+        answer = sr1(IP(dst=self._targets)/ICMP(type=13), timeout=2, retry=2, verbose=False)
+        answer[ICMP].show()
+
     
  
 
-targets='212.77.98.9'
+targets='151.101.192.81'
 test = HostDiscovery(targets)
-test.get_domain_info()
+#test.get_domain_info()
+test.just_ping()
 
 
 
