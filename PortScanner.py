@@ -5,7 +5,6 @@ from scapy.sendrecv import sr1
 from scapy.volatile import RandShort
 from IPinterpreter import IPinterpreter
 
-
 class PortScanner(IPinterpreter):
     scan_dict = {
         'Null' :   { None : 'Port open OR filtered', 20 : 'Port closed [RST(4)+ACK(16)]'},
@@ -32,36 +31,39 @@ class PortScanner(IPinterpreter):
         self.__cert_result = cert_result
 
     def __portInterpreter(self):
-        if '-' in self.__ports:
-            self.__ports=self.__ports.split('-')
-            try:
-                self.__ports = list(map(int, self.__ports))
-            except:
-                print('Propably not number')
-                exit()
-            if (self.__ports[0] <= self.__ports[1] and ((self.__ports[0] in range(0, 65536)) and (self.__ports[1] in range(0, 65536)))):
-                self.__ports.append(True)
+        try:
+            if '-' in self.__ports:
+                self.__ports=self.__ports.split('-')
+                try:
+                    self.__ports = list(map(int, self.__ports))
+                except:
+                    print('Propably not number')
+                    exit()
+                if (self.__ports[0] <= self.__ports[1] and ((self.__ports[0] in range(0, 65536)) and (self.__ports[1] in range(0, 65536)))):
+                    self.__ports.append(True)
+                else:
+                    print('Wrong ports range')
+                    exit()
+            elif ',' in self.__ports:
+                self.__ports=self.__ports.split(',')
+                try:
+                    self.__ports = list(map(int, self.__ports))
+                except:
+                    print('Propably not number')
+                    exit()
+                for check in self.__ports:
+                    if check not in range(0, 65536):
+                        print('Wrong ports range format')
+                        exit()
+                self.__ports.append(False)
             else:
-                print('Wrong ports range')
-                exit()
-        elif ',' in self.__ports:
-            self.__ports=self.__ports.split(',')
-            try:
-                self.__ports = list(map(int, self.__ports))
-            except:
-                print('Propably not number')
-                exit()
-            for check in self.__ports:
-                if check not in range(0, 65536):
+                try:
+                    self.__ports=int(self.__ports)
+                except:
                     print('Wrong ports range format')
                     exit()
-            self.__ports.append(False)
-        else:
-            try:
-                self.__ports=int(self.__ports)
-            except:
-                print('Wrong ports range format')
-                exit()
+        except:
+            pass
 
     def __portFor(self):
         self.__portInterpreter()
@@ -104,25 +106,31 @@ class PortScanner(IPinterpreter):
     def __scan_tcp(self):
         pick={'SYN' : 2,  'Null' : 0, 'FIN' : 1, 'Xmas' : 41,
               'ACK' : 16, 'Window' : 16,  'Maimon' : 17}
-        if self.__cert_result == False:
-            print("Scan TCP %s on: %s:%s" %(self.__type_tcp, self._targets, self.__ports))
+        #if self.__cert_result == False:
+        print("Scan TCP %s on: %s:%s" %(self.__type_tcp, self._targets, self.__ports))
 
         source_port=RandShort()
         ans=sr1(IP(dst=self._targets)/TCP(sport=source_port, dport=self.__ports, flags=pick.get(self.__type_tcp)),timeout=1, retry=1, verbose=False)
 
-        if self.__cert_result == True:
-            if self.__type_tcp == 'SYN':
-                if ans[TCP].flags == 18:
-                    print("Scan TCP %s on: %s:%s" %(self.__type_tcp, self._targets, self.__ports))
-                    print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags))
-            elif self.__type_tcp != 'Window':
-                if ans[TCP].flags in [4,18,20]:
-                    print("Scan TCP %s on: %s:%s" %(self.__type_tcp, self._targets, self.__ports))
-                    print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags))
-            elif ans[TCP].window > 0:
-                print("Scan TCP %s on: %s:%s" %(self.__type_tcp, self._targets, self.__ports))
-                print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags)[0])
-
+        if ans is None:
+            print(self.scan_dict.get(self.__type_tcp).get(None))
+        
+        elif self.__cert_result == True:
+            try:
+                if self.__type_tcp == 'SYN':
+                    if ans[TCP].flags in [18, 20]:
+                        
+                        print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags))
+                elif self.__type_tcp != 'Window':
+                    if ans[TCP].flags in [4,18,20]:
+                        
+                        print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags))
+                elif ans[TCP].window > 0:
+                    
+                    print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags)[0])
+            except Exception as Exct:
+                print(Exct)
+                print(str(ans[ICMP].type) +': '+ str(ans[ICMP].code))
         else:
             try:
                 if self.__type_scan != 'Window':
@@ -233,19 +241,3 @@ class PortScanner(IPinterpreter):
                                     self._targets=base+str(ip)+'.'+str(x)
                                     self.__portFor()
 
-
-
-
-
-#Tcp Flags
-#URG(Urgent)            32
-#ACK(Acknowledgement)   16
-#PSH(Push)               8
-#RST(Reset)              4
-#SYN(Synchronization)    2
-#FIN(Finish)             1
-
-#ICMPcode
-#0 - echo reply
-#3 - destination unreachable
-#8 - echo request
