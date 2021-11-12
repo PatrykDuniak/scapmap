@@ -29,6 +29,7 @@ class IPinterpreter():
         self._targets=self._targets[-2:]
         return self._targets
 
+    #Calculate first and last address from the range given by '/' like 192.168.0.0/24 give us list with 192.168.0.1 and 192.168.0.254
     def __subnetCalc(self):
         subnets=[]
         ip_range=['','']
@@ -39,8 +40,10 @@ class IPinterpreter():
             if(self.__scope_value[1] < 8*oct):
                 hosts=2**(8-(self.__scope_value[1]-8*(oct-1)))
                 subnets.append(0)
+
                 for ip in range(256//hosts):
                     subnets.append((hosts*(ip+1)))
+
                 for inx in range(len(subnets)):
                     if int(self._targets[oct-1]) in range(subnets[inx], subnets[inx+1]):
                         for step in range(0,4):
@@ -67,11 +70,13 @@ class IPinterpreter():
         self._targets=ip_range
         return self._targets
 
+    #function checking if IP is given in proper format for app
     def __ipchecker(self):
         test=self._targets
         if test.count('.')!=3:
             print('Not proper IP format')
             exit()
+
         test=test.split('.')
         for text in range(len(test)-1):
             try:
@@ -79,33 +84,42 @@ class IPinterpreter():
                 if text not in range(0,256):
                     print('Number out of range')
                     exit()
+
             except:
                 print('Not number')
                 exit()
+
         try:
             test[3]=int(test[3])
+
         except:
             if ('-' not in test[3]) and ('/' not in test[3]):
                 print('Only using - and / to setting range')
                 exit()
+
             if ('-') in test[3]:
                 test[3]=test[3].split('-')
                 try:
                     test[3][0] = int(test[3][0])
                     test[3][1] = int(test[3][1])
+
                     if test[3][0] not in range(0, 255) or test[3][1] not in range(0, 255) or test[3][0] > test[3][1]:
                         print('Last oct number out of range or wrong range')
                         exit()
+
                 except:
                     print('Propably not number')
                     exit()
+
             else:
                 test[3]=test[3].split('/')
                 try:
                     test[3][0] = int(test[3][0])
                     test[3][1] = int(test[3][1])
+
                     if test[3][0] not in range(0, 255) or test[3][1] not in range(1, 31):
                         print('Last oct number out of range or wrong subnet number')
+
                 except:
                     print('Propably not number')
                     exit()
