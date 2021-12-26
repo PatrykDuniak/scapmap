@@ -45,5 +45,3 @@ else:
             else:
                 PortScanner(targets=args.ipaddress, ports=args.ports, type_scan=element, set_flags=args.custom_tcp_scan, 
                             specific_result=args.specific_result, timeout=args.timeout, retry=args.retry).scanner()
-
-#https://www.writethedocs.org/guide/writing/beginners-guide-to-docs/
