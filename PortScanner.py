@@ -4,6 +4,7 @@ from scapy.layers.inet import IP, UDP, TCP, ICMP
 from scapy.sendrecv import sr1
 from scapy.volatile import RandShort
 from IPinterpreter import IPinterpreter
+from datetime import datetime
 
 class PortScanner(IPinterpreter):
     #Dictionary with interpretation of specific TCP scans
@@ -28,7 +29,7 @@ class PortScanner(IPinterpreter):
 
         'Maimon' : { None : 'Port open OR filtered', 4 : 'Port closed'}}
 
-    def __init__(self, targets, ports, type_scan, type_tcp = 'SYN', set_flags = 0, specific_result=True):
+    def __init__(self, targets, ports, type_scan = 'TCP', type_tcp = 'SYN', set_flags = 0, specific_result=True, timeout=0.1, retry=0):
         #Inherit class of interpreting ip address given in string for example 192.168.0.32/28
         super().__init__(targets)
         self.__ports = ports
@@ -36,9 +37,11 @@ class PortScanner(IPinterpreter):
         self.__type_tcp = type_tcp
         self.__set_flags = set_flags
         self.__specific_result = specific_result  #displaying or not unclear answers like 'open or filtered'
+        self.__timeout = timeout
+        self.__retry = retry
 
     #Changing ports given in string to proper format for this program
-    def __portInterpreter(self):
+    def portInterpreter(self):
         if type(self.__ports) == int:
             pass 
         elif '-' in self.__ports:     #interpreter for ports given in range (string) like 80-100
@@ -73,10 +76,10 @@ class PortScanner(IPinterpreter):
                 exit()
 
     #Call different types of scans with loops for diffrent ports 
-    def __portFor(self):
-        self.__portInterpreter()
+    def portFor(self):
+        self.portInterpreter()
         temp_list=self.__ports
-        scan_type = { 'TCP' : self.__scan_tcp, 'UDP' : self.__scan_udp, 'IP' : self.__scan_ip_protocol, 'Custom' : self.__scan_tcp_custom}
+        scan_type = { 'TCP' : self.scan_tcp, 'UDP' : self.scan_udp, 'IProt' : self.scan_ip_protocol, 'Custom' : self.scan_tcp_custom}
         
         if type(self.__ports) == int:
             scan_type.get(self.__type_scan)()
@@ -95,7 +98,7 @@ class PortScanner(IPinterpreter):
             exit()
 
     #Interpreting flags given in string like 'FIN' or 'F' to numbers 
-    def __tcp_calc_flag(self):
+    def tcp_calc_flag(self):
         flag_value=0
         flags= {1 : ['FIN', 'F'],
                 2 : ['SYN', 'S'],
@@ -115,7 +118,7 @@ class PortScanner(IPinterpreter):
         return flag_value
 
     #Calling different types of TCP scans
-    def __scan_tcp(self):
+    def scan_tcp(self):
         pick={'SYN' : 2,  'Null' : 0, 'FIN' : 1, 'Xmas' : 41,
               'ACK' : 16, 'Window' : 16,  'Maimon' : 17}
 
@@ -123,7 +126,7 @@ class PortScanner(IPinterpreter):
             print("Scan TCP %s on: %s:%s" %(self.__type_tcp, self._targets, self.__ports))
 
         #calling Scapy function sr1(send and receive 1)
-        ans=sr1(IP(dst=self._targets)/TCP(sport=RandShort(), dport=self.__ports, flags=pick.get(self.__type_tcp)), timeout=0.1, retry=1, verbose=False)
+        ans=sr1(IP(dst=self._targets)/TCP(sport=RandShort(), dport=self.__ports, flags=pick.get(self.__type_tcp)), timeout=self.__timeout, retry=self.__retry, verbose=False)
 
         #analyze answers from Scapy function and printing results
         if self.__specific_result == True:
@@ -170,12 +173,12 @@ class PortScanner(IPinterpreter):
                     print('Filtered, ICMP unreachable error')
 
     #Calling UDP scan
-    def __scan_udp(self):
+    def scan_udp(self):
         if self.__specific_result == False:
             print("Scan UDP on: %s:%s" %(self._targets, self.__ports))
         
         #calling Scapy function sr1(send and receive 1)
-        ans = sr1(IP(dst=self._targets)/UDP(sport=RandShort(), dport=self.__ports),timeout=0.1, retry=2, verbose=False)
+        ans = sr1(IP(dst=self._targets)/UDP(sport=RandShort(), dport=self.__ports),timeout=self.__timeout, retry=self.__retry, verbose=False)
         
         #analyze answers from Scapy function and printing results
         if self.__specific_result == True:
@@ -200,7 +203,7 @@ class PortScanner(IPinterpreter):
                 print('Filtered')
 
     #Calling IP protocol (setting flags) scan
-    def __scan_ip_protocol(self): #https://www.eit.lth.se/ppplab/IPHeader.htm
+    def scan_ip_protocol(self): #https://www.eit.lth.se/ppplab/IPHeader.htm
         print("Scan IP Protocol on: %s" %(self._targets))
 
         #There are 134 diffrent protocols from 0 to 134 like OSPF(89) or VRRP(112)
@@ -208,7 +211,7 @@ class PortScanner(IPinterpreter):
             ans = 0 #clearing variable
 
             #calling Scapy function sr1(send and receive 1)
-            ans = sr1(IP(dst=self._targets, proto=x),timeout=0.1, retry=2, verbose=False)
+            ans = sr1(IP(dst=self._targets, proto=x),timeout=self.__timeout, retry=self.__retry, verbose=False)
             
             print("For %d:  " %(x), end = '')
 
@@ -225,11 +228,11 @@ class PortScanner(IPinterpreter):
                 print('Protocol open')
 
     #Calling tcp scan with open to set flags and displaying whole frame
-    def __scan_tcp_custom(self):
+    def scan_tcp_custom(self):
         flag_value=self.__tcp_calc_flag()
 
         #calling Scapy function sr1(send and receive 1)
-        ans=sr1(IP(dst=self._targets)/TCP(sport=RandShort(), dport=self.__ports, flags=flag_value),timeout=0.1, retry=2, verbose=False)
+        ans=sr1(IP(dst=self._targets)/TCP(sport=RandShort(), dport=self.__ports, flags=flag_value),timeout=self.__timeout, retry=self.__retry, verbose=False)
 
         try:
             #Hard to predict answer with random flag value so its better display whole frame
@@ -239,12 +242,12 @@ class PortScanner(IPinterpreter):
 
     #main function to scan 
     def scanner(self):
-        print('Scanning started...')
+        print('Scanning started...'+datetime.now().strftime("%H:%M:%S"))
         base='' #operation on octets in IP address to iterate range
         self._targets=range_ip=self.IPcalc() #change string range of IP address to first and last address
 
         if type(range_ip) == str:   #if IPcalc didn't change anything that means it is single address
-            self.__portFor()
+            self.portFor()
 
         else:
             range_ip[0] = range_ip[0].split('.')    #spliting IP address to list with octets 
@@ -258,7 +261,7 @@ class PortScanner(IPinterpreter):
                     if oct == 3:   #last octet
                         for ip in range(int(range_ip[0][oct]), int(range_ip[1][oct])+1):  #calculate range and enumarate by every address
                             self._targets=range_ip[0][0]+'.'+range_ip[0][1]+'.'+range_ip[0][2]+'.'+str(ip)
-                            self.__portFor()
+                            self.portFor()
 
                     #usually we are going to scan to max /24, with more address process is more complicated
                     else:
@@ -271,17 +274,17 @@ class PortScanner(IPinterpreter):
                                     for y in range(1, 255):
                                         for z in range(1, 255):
                                             self._targets=str(ip)+'.'+str(x)+'.'+str(y)+'.'+str(z)
-                                            self.__portFor()
+                                            self.portFor()
 
                             elif base.count('.')==1:
                                 for x in range(1, 255):
                                     for y in range(1, 255):
                                         self._targets=base+str(ip)+'.'+str(x)+'.'+str(y)
-                                        self.__portFor()
+                                        self.portFor()
 
                             else:
                                 for x in range(1, 255):
                                     self._targets=base+str(ip)+'.'+str(x)
-                                    self.__portFor()
+                                    self.portFor()
 
-        print('Scanning ended...')
+        print('Scanning ended...'+datetime.now().strftime("%H:%M:%S"))

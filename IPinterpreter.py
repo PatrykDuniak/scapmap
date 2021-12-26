@@ -3,6 +3,7 @@ class IPinterpreter():
         self._targets = targets
         self.__scope_value=''
 
+    #Main fuction who returned proper IPaddress of targets for program
     def IPcalc(self):
         self.__ipchecker()
         self.__scope_value = self._targets.split('.')[-1]
