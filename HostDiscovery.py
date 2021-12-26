@@ -22,10 +22,10 @@ class HostDiscovery(IPinterpreter):
         try:
             IPinterpreter.IPcalc(self)
             domain_name = socket.gethostbyaddr(self._targets)
-            ans = sr1(IP(dst='8.8.8.8')/UDP(dport=53)/DNS(rd=1, qd=DNSQR(qname=domain_name[0])),timeout=2, retry=2, verbose=False)
+            ans = sr1(IP(dst='8.8.8.8')/UDP(dport=53)/DNS(rd=1, qd=DNSQR(qname=domain_name[0])),timeout=self.timeout, retry=self.retry, verbose=False)
             ans[DNS].show()
         except:
-            ans = sr1(IP(dst='8.8.8.8')/UDP(dport=53)/DNS(rd=1, qd=DNSQR(qname=self._targets)), timeout=2, retry=2, verbose=False)
+            ans = sr1(IP(dst='8.8.8.8')/UDP(dport=53)/DNS(rd=1, qd=DNSQR(qname=self._targets)), timeout=self.timeout, retry=self.retry, verbose=False)
             if ans is None:
                 print('Error')
             else:
@@ -34,7 +34,7 @@ class HostDiscovery(IPinterpreter):
     #https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-codes-0
     def icmp_ping(self):
         print("Ping on %s" %(self._targets))
-        ans = sr1(IP(dst=self._targets)/ICMP(type=self.__icmp_type), timeout=2, retry=2, verbose=False)
+        ans = sr1(IP(dst=self._targets)/ICMP(type=self.icmp_type), timeout=self.timeout, retry=self.retry, verbose=False)
         if ans is None:
             print('Unreachable or filtered, reply not arrived')
 
@@ -58,7 +58,7 @@ class HostDiscovery(IPinterpreter):
             ans.show()
             
     def traceroute(self):
-        ans, unans = traceroute(target=self._targets, verbose=False)
+        ans, unans = traceroute(target=self._targets, verbose=False, timeout=self.timeout)
         if ans is None:
             print('Unreachable or filtered, reply not arrived')
         else:
@@ -66,7 +66,7 @@ class HostDiscovery(IPinterpreter):
         
 
     def arp_ping(self):
-        ans, unans = arping(net=self._targets, verbose=False)
+        ans, unans = arping(net=self._targets, verbose=False, timeout=self.timeout)
         if ans is None:
             print('Unreachable or filtered, reply not arrived')
         else:

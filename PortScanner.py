@@ -25,7 +25,7 @@ class PortScanner(IPinterpreter):
 
         'ACK' :    { None : 'Filtered', 4 : 'Not filtered open/closed'},
         
-        'Window' : { None : 'Filtered', 4 : ['Not filtered, open', 'Not filtered open/closed']},
+        'Window' : { None : 'Filtered', 4 : ['Not filtered, open', 'Not filtered closed']},
 
         'Maimon' : { None : 'Port open OR filtered', 4 : 'Port closed'}}
 
@@ -144,6 +144,10 @@ class PortScanner(IPinterpreter):
                 elif ans[TCP].window > 0:
                     print("Scan TCP %s on: %s:%s" %(self.__type_tcp, self._targets, self.__ports))
                     print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags)[0])
+
+                elif ans[TCP].window == 0:
+                    print("Scan TCP %s on: %s:%s" %(self.__type_tcp, self._targets, self.__ports))
+                    print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags)[1])
                 
                 else:
                     print(ans.show())
@@ -229,7 +233,7 @@ class PortScanner(IPinterpreter):
 
     #Calling tcp scan with open to set flags and displaying whole frame
     def scan_tcp_custom(self):
-        flag_value=self.__tcp_calc_flag()
+        flag_value=self.tcp_calc_flag()
 
         #calling Scapy function sr1(send and receive 1)
         ans=sr1(IP(dst=self._targets)/TCP(sport=RandShort(), dport=self.__ports, flags=flag_value),timeout=self.__timeout, retry=self.__retry, verbose=False)
@@ -237,6 +241,7 @@ class PortScanner(IPinterpreter):
         try:
             #Hard to predict answer with random flag value so its better display whole frame
             ans.show()
+
         except (TypeError, AttributeError):
             print('Any packet received')
 

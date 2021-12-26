@@ -4,9 +4,9 @@ from HostDiscovery import HostDiscovery
 from PortScanner import PortScanner
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-IP' , '--ipaddress', required=True, help="Input ip data in normal string format ex '127.0.0.1' you can do it with range like '127.0.0.1-2' or '127.0.0.1/24'")
-parser.add_argument('-p', '--ports', help="Input number of port like '80' or in range '10-80' or by a list '10,20,30'")
-parser.add_argument('-ICMPing', type=int, help="Performing typical ICMP ping")
+parser.add_argument('-ip', '--ipaddress', metavar='[ip address]', required=True, help="Input ip data in normal string format ex '127.0.0.1' you can do it with range like '127.0.0.1-2' or '127.0.0.1/24'")
+parser.add_argument('-p', '--ports', metavar='[port number]', help="Input number of port like '80' or in range '10-80' or by a list '10,20,30'")
+parser.add_argument('-ICMPing', metavar='[icmp code]', type=int, help="Performing typical ICMP ping")
 parser.add_argument('-ARPing', action='store_true',  help="Performing ARP ping")
 parser.add_argument('-Trace', action='store_true',  help="Perfroming Traceroute")
 parser.add_argument('-DomainInfo', action='store_true', help="Get dns domain info")
@@ -17,12 +17,12 @@ parser.add_argument('-ACK', action='store_true', help="Performing TCP ACK scan")
 parser.add_argument('-Null', action='store_true', help="Performing TCP NULL scan")
 parser.add_argument('-Window', action='store_true', help="Performing TCP Window scan")
 parser.add_argument('-Maimon', action='store_true', help="Performing TCP Maimom scan")
-parser.add_argument('-Custom', '--custom_tcp_scan', help="Input flags by a spaces with only 1 letter ex.'F S R' or 'FIN SYN RST'")
+parser.add_argument('-Custom', '--custom_tcp_scan', metavar='[tcp flags]', help="Input flags by a spaces with only 1 letter ex.'F S R' or 'FIN SYN RST'")
 parser.add_argument('-UDP', action='store_true', help="Performing UDP scan")
 parser.add_argument('-IProt', action='store_true', help="Performing IP Protocol scan")
 parser.add_argument('--specific_result', action='store_false', help="Optional parameter to display every interpreted answers like 'port open or filtered'")
-parser.add_argument('--timeout', default=0.1, type=float, help="Optional parameter to display every interpreted answers like 'port open or filtered'")
-parser.add_argument('--retry', default=0, type=int, help="Optional parameter to display every interpreted answers like 'port open or filtered'")
+parser.add_argument('--timeout', metavar='[seconds]', default=0.1, type=float, help="Parameter to set timeout who decides how long app will wait for the answer from the target")
+parser.add_argument('--retry', metavar='[number of retries]', default=0, type=int, help="Parameter who decides how many retries app will do if answer exceed timeout time")
 args = parser.parse_args()
 disc_dict={'ICMPing':args.ICMPing, 'ARPing':args.ARPing, 'Trace':args.Trace, 'DomainInfo':args.DomainInfo}
 host_dict={'SYN':args.SYN, 'FIN':args.FIN, 'Xmas':args.Xmas, 'ACK':args.ACK, 'Null':args.Null, 'Window':args.Window, 

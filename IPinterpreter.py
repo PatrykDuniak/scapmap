@@ -1,3 +1,5 @@
+import socket
+
 class IPinterpreter():
     def __init__(self, targets):
         self._targets = targets
@@ -74,8 +76,9 @@ class IPinterpreter():
     #function checking if IP is given in proper format for app
     def __ipchecker(self):
         test=self._targets
+        test = socket.gethostbyname(test)
         if test.count('.')!=3:
-            print('Not proper IP format')
+            print('Not proper ip address/name site format')
             exit()
 
         test=test.split('.')
