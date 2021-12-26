@@ -76,7 +76,10 @@ class IPinterpreter():
     #function checking if IP is given in proper format for app
     def __ipchecker(self):
         test=self._targets
-        test = socket.gethostbyname(test)
+        try:
+            test = socket.gethostbyname(test)
+        except:
+            pass
         if test.count('.')!=3:
             print('Not proper ip address/name site format')
             exit()
