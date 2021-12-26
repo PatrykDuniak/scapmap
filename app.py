@@ -1,4 +1,3 @@
-import sys
 import argparse
 from HostDiscovery import HostDiscovery
 from PortScanner import PortScanner
@@ -17,7 +16,7 @@ parser.add_argument('-ACK', action='store_true', help="Performing TCP ACK scan")
 parser.add_argument('-Null', action='store_true', help="Performing TCP NULL scan")
 parser.add_argument('-Window', action='store_true', help="Performing TCP Window scan")
 parser.add_argument('-Maimon', action='store_true', help="Performing TCP Maimom scan")
-parser.add_argument('-Custom', '--custom_tcp_scan', metavar='[tcp flags]', help="Input flags by a spaces with only 1 letter ex.'F S R' or 'FIN SYN RST'")
+parser.add_argument('-Custom', '--custom_tcp_scan', metavar='[tcp flags]', help="Input flags by a spaces with only 1 letter ex.'F S R' or 'FIN SYN RST'. If you want to input more than 1 flag you neet them to stay between ''(aposthrophes)")
 parser.add_argument('-UDP', action='store_true', help="Performing UDP scan")
 parser.add_argument('-IProt', action='store_true', help="Performing IP Protocol scan")
 parser.add_argument('--specific_result', action='store_false', help="Optional parameter to display every interpreted answers like 'port open or filtered'")
