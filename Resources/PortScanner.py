@@ -1,9 +1,10 @@
 import logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+from scapy.arch import str2mac
 from scapy.layers.inet import IP, UDP, TCP, ICMP
 from scapy.sendrecv import sr1
 from scapy.volatile import RandShort
-from IPinterpreter import IPinterpreter
+from .IPinterpreter import IPinterpreter
 from datetime import datetime
 
 class PortScanner(IPinterpreter):
@@ -23,9 +24,9 @@ class PortScanner(IPinterpreter):
         'SYN':     { None : 'Filtered', 18 : 'Port open, not filtered [SYN(2)+ACK(16)]', 
                        20 : 'Port closed, propably not filtered [RST(4)+ACK(16)]'},
 
-        'ACK' :    { None : 'Filtered', 4 : 'Not filtered open/closed'},
+        'ACK' :    { None : 'Filtered', 4 : 'Not filtered open/closed'},       
         
-        'Window' : { None : 'Filtered', 4 : ['Not filtered, open', 'Not filtered closed']},
+        'Window' : { None : 'Filtered', 4 : { 0: 'Not filtered closed', 1:'Not filtered, open'}},
 
         'Maimon' : { None : 'Port open OR filtered', 4 : 'Port closed'}}
 
@@ -127,7 +128,6 @@ class PortScanner(IPinterpreter):
 
         #calling Scapy function sr1(send and receive 1)
         ans=sr1(IP(dst=self._targets)/TCP(sport=RandShort(), dport=self.__ports, flags=pick.get(self.__type_tcp)), timeout=self.__timeout, retry=self.__retry, verbose=False)
-
         #analyze answers from Scapy function and printing results
         if self.__specific_result == True:
             try:
@@ -143,28 +143,27 @@ class PortScanner(IPinterpreter):
 
                 elif ans[TCP].window > 0:
                     print("Scan TCP %s on: %s:%s" %(self.__type_tcp, self._targets, self.__ports))
-                    print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags)[0])
+                    print(self.scan_dict[self.__type_tcp][ans[TCP].flags][1])
 
                 elif ans[TCP].window == 0:
                     print("Scan TCP %s on: %s:%s" %(self.__type_tcp, self._targets, self.__ports))
-                    print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags)[1])
-                
+                    print(self.scan_dict[self.__type_tcp][ans[TCP].flags][0])
+
                 else:
                     print(ans.show())
+
             except:
                 pass
 
         else:
             try:
-                if self.__type_scan != 'Window':
+                if self.__type_tcp != 'Window':
                     print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags))
-
                 else:
-                    if ans[TCP].window > 0:
-                        print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags)[0])
-
+                    if ans[TCP].window == 0:
+                        print(self.scan_dict[self.__type_tcp][ans[TCP].flags][0])
                     else:
-                        print(self.scan_dict.get(self.__type_tcp).get(ans[TCP].flags)[1])
+                        print(self.scan_dict[self.__type_tcp][ans[TCP].flags][1])
 
             except (TypeError, AttributeError):
                 if ans == None:
@@ -254,6 +253,7 @@ class PortScanner(IPinterpreter):
         print('Scanning started...'+datetime.now().strftime("%H:%M:%S"))
         base='' #operation on octets in IP address to iterate range
         self._targets=range_ip=self.IPcalc() #change string range of IP address to first and last address
+        temp_port = self.__ports
 
         if type(range_ip) == str:   #if IPcalc didn't change anything that means it is single address
             self.portFor()
@@ -270,6 +270,7 @@ class PortScanner(IPinterpreter):
                     if oct == 3:   #last octet
                         for ip in range(int(range_ip[0][oct]), int(range_ip[1][oct])+1):  #calculate range and enumarate by every address
                             self._targets=range_ip[0][0]+'.'+range_ip[0][1]+'.'+range_ip[0][2]+'.'+str(ip)
+                            self.__ports = temp_port
                             self.portFor()
 
                     #usually we are going to scan to max /24, with more address process is more complicated
@@ -283,17 +284,20 @@ class PortScanner(IPinterpreter):
                                     for y in range(1, 255):
                                         for z in range(1, 255):
                                             self._targets=str(ip)+'.'+str(x)+'.'+str(y)+'.'+str(z)
+                                            self.__ports = temp_port
                                             self.portFor()
 
                             elif base.count('.')==1:
                                 for x in range(1, 255):
                                     for y in range(1, 255):
                                         self._targets=base+str(ip)+'.'+str(x)+'.'+str(y)
+                                        self.__ports = temp_port
                                         self.portFor()
 
                             else:
                                 for x in range(1, 255):
                                     self._targets=base+str(ip)+'.'+str(x)
+                                    self.__ports = temp_port
                                     self.portFor()
 
         print('Scanning ended...'+datetime.now().strftime("%H:%M:%S"))

@@ -23,18 +23,18 @@ description='''
                 | |                   | |    
                 |_|                   |_|    
 
-Welcome to Scapmap! Port scanner and host discovery application (like nmap) written in python based on scapmap library.
+Welcome to Scapmap! Port scanner written in python based on scapy library.
 Purpose:
-Just to learn how scanning ports works and have good understanding how TCP works on packet level. And have a scanner that works fine on Windows too.
+Just to learn how scanning ports works and have good understanding how TCP works on packet level. And have a scanner that works fine on Windows too. But I'm not sure that everything works correctly on theoretical and programming level.
 
 Prerequisites:
->OS: Works fine on both Windows and Linux distributions
->Python version: Tested on Python 3.9.7 but should work on other too
+>OS: Works fine on Windows, MacOS and Linux distributions (tested only on debian like and manjaro)
+>Python version: Tested on Python 3.9.7 but should work on others too
 >Scapy version: Tested on 2.4.5, older versions can have some problems
 
 Examples of use:
 This application allows you to use different scans and discovery in 1 command on 1 host or multiple of them.
-If you see a lot of 'Protocol open OR filtered' that means that whole traffic was cutted by a target or just host is down, check it with discovery functions like ARPing.
+If you see a lot of 'Protocol open OR filtered' that means that whole traffic was cutted by a target or just host is down (but that depends of type of scan etc. - nmap documentation explains it well), check it with discovery functions like ARPing.
 
 Ping whole subnet, in -ICMPing we are providing
 >python scapmap.py -ip 192.168.0.1/24 -ICMPing
@@ -51,8 +51,8 @@ We can also combine host discovery and port scans
 '''
 )
 
-parser.add_argument('-ip', '--ipaddress', metavar='[ip address]', required=True, help="Input ip data in normal string format ex '127.0.0.1' you can do it with range like '127.0.0.1-2' or '127.0.0.1/24'")
-parser.add_argument('-p', '--ports', metavar='[port number]', help="Input number of port like '80' or in range '10-80' or by a list '10,20,30'")
+parser.add_argument('-ip', '--ipaddress', metavar='[ip address]', default='127.0.0.1' required=True, help="Input ip data in normal string format ex '127.0.0.1' you can do it with range like '127.0.0.1-2' or '127.0.0.1/24'")
+parser.add_argument('-p', '--ports', metavar='[port number]',default='80' help="Input number of port like '80' or in range '10-80' or by a list '10,20,30'")
 parser.add_argument('-ICMPing', metavar='icmp code', nargs='?', type=int, default=None, const=8, help="Performing typical ICMP ping")
 parser.add_argument('-ARPing', action='store_true',  help="Performing ARP ping")
 parser.add_argument('-Trace', action='store_true',  help="Perfroming Traceroute")
@@ -64,7 +64,7 @@ parser.add_argument('-ACK', action='store_true', help="Performing TCP ACK scan")
 parser.add_argument('-Null', action='store_true', help="Performing TCP NULL scan")
 parser.add_argument('-Window', action='store_true', help="Performing TCP Window scan")
 parser.add_argument('-Maimon', action='store_true', help="Performing TCP Maimom scan")
-parser.add_argument('-Custom', '--custom_tcp_scan', metavar='[tcp flags]', help="Input flags by a spaces with only 1 letter ex.'F S R' or 'FIN SYN RST'. If you want to input more than 1 flag you neet them to stay between ''(aposthrophes)")
+parser.add_argument('-Custom', '--custom_tcp_scan', metavar='[tcp flags]', default='SYN' help="Input flags by a spaces with only 1 letter ex.'F S R' or 'FIN SYN RST'. If you want to input more than 1 flag you neet them to stay between ''(aposthrophes)")
 parser.add_argument('-UDP', action='store_true', help="Performing UDP scan")
 parser.add_argument('-IProt', action='store_true', help="Performing IP Protocol scan")
 parser.add_argument('--specific_result', action='store_true', help="Optional parameter to display only specific answers like 'port open' not like 'port open or filtered'")

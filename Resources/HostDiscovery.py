@@ -1,11 +1,12 @@
 import logging
 import socket
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+from scapy.arch import str2mac
 from scapy.layers.inet import  IP, UDP, ICMP, traceroute 
 from scapy.layers.dns import DNS, DNSQR
 from scapy.layers.l2 import arping
 from scapy.sendrecv import sr1
-from IPinterpreter import IPinterpreter
+from .IPinterpreter import IPinterpreter
 from datetime import datetime
 
 class HostDiscovery(IPinterpreter):
@@ -34,6 +35,8 @@ class HostDiscovery(IPinterpreter):
     #https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-codes-0
     def icmp_ping(self):
         print("Ping on %s" %(self._targets))
+        if self.timeout < 0.8:
+            self.timeout = 0.8
         ans = sr1(IP(dst=self._targets)/ICMP(type=self.icmp_type), timeout=self.timeout, retry=self.retry, verbose=False)
         if ans is None:
             print('Unreachable or filtered, reply not arrived')
