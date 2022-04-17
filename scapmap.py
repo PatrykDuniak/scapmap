@@ -51,8 +51,8 @@ We can also combine host discovery and port scans
 '''
 )
 
-parser.add_argument('-ip', '--ipaddress', metavar='[ip address]', default='127.0.0.1' required=True, help="Input ip data in normal string format ex '127.0.0.1' you can do it with range like '127.0.0.1-2' or '127.0.0.1/24'")
-parser.add_argument('-p', '--ports', metavar='[port number]',default='80' help="Input number of port like '80' or in range '10-80' or by a list '10,20,30'")
+parser.add_argument('-ip', '--ipaddress', metavar='[ip address]', default='127.0.0.1', required=True, help="Input ip data in normal string format ex '127.0.0.1' you can do it with range like '127.0.0.1-2' or '127.0.0.1/24'")
+parser.add_argument('-p', '--ports', metavar='[port number]',default='80', help="Input number of port like '80' or in range '10-80' or by a list '10,20,30'")
 parser.add_argument('-ICMPing', metavar='icmp code', nargs='?', type=int, default=None, const=8, help="Performing typical ICMP ping")
 parser.add_argument('-ARPing', action='store_true',  help="Performing ARP ping")
 parser.add_argument('-Trace', action='store_true',  help="Perfroming Traceroute")
@@ -64,7 +64,7 @@ parser.add_argument('-ACK', action='store_true', help="Performing TCP ACK scan")
 parser.add_argument('-Null', action='store_true', help="Performing TCP NULL scan")
 parser.add_argument('-Window', action='store_true', help="Performing TCP Window scan")
 parser.add_argument('-Maimon', action='store_true', help="Performing TCP Maimom scan")
-parser.add_argument('-Custom', '--custom_tcp_scan', metavar='[tcp flags]', default='SYN' help="Input flags by a spaces with only 1 letter ex.'F S R' or 'FIN SYN RST'. If you want to input more than 1 flag you neet them to stay between ''(aposthrophes)")
+parser.add_argument('-Custom', '--custom_tcp_scan', metavar='[tcp flags]', default='SYN', help="Input flags by a spaces with only 1 letter ex.'F S R' or 'FIN SYN RST'. If you want to input more than 1 flag you neet them to stay between ''(aposthrophes)")
 parser.add_argument('-UDP', action='store_true', help="Performing UDP scan")
 parser.add_argument('-IProt', action='store_true', help="Performing IP Protocol scan")
 parser.add_argument('--specific_result', action='store_true', help="Optional parameter to display only specific answers like 'port open' not like 'port open or filtered'")
@@ -90,7 +90,5 @@ for element in host_dict:
             PortScanner(targets=args.ipaddress, ports=args.ports, type_tcp=element, set_flags=args.custom_tcp_scan, 
                         specific_result=args.specific_result, timeout=args.timeout, retry=args.retry).scanner()
             print('\n')
-        else:
-            PortScanner(targets=args.ipaddress, ports=args.ports, type_scan=element, set_flags=args.custom_tcp_scan, 
-                            specific_result=args.specific_result, timeout=args.timeout, retry=args.retry).scanner()
-            print('\n')
+
+           
