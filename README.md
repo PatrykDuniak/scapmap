@@ -1,4 +1,12 @@
-# Scapmap
+# scapmap
+ _____                                       
+/  ___|                                      
+\ `--.  ___ __ _ _ __  _ __ ___   __ _ _ __  
+ `--. \/ __/ _` | '_ \| '_ ` _ \ / _` | '_ \ 
+/\__/ / (_| (_| | |_) | | | | | | (_| | |_) |
+\____/ \___\__,_| .__/|_| |_| |_|\__,_| .__/ 
+                | |                   | |    
+                |_|                   |_|    
 
 Welcome to Scapmap! Port scanner written in python based on scapy library.
 Purpose:

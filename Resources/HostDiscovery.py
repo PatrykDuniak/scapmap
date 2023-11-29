@@ -1,16 +1,12 @@
 import logging
-import socket
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
-from scapy.arch import str2mac
-from scapy.layers.inet import  IP, UDP, ICMP, traceroute 
-from scapy.layers.dns import DNS, DNSQR
-from scapy.layers.l2 import arping
-from scapy.sendrecv import sr1
+from scapy.layers.inet import  IP, ICMP, traceroute 
+from scapy.layers.l2 import Ether, ARP
+from scapy.sendrecv import sr1, sr
 from .IPinterpreter import IPinterpreter
 from datetime import datetime
 
 class HostDiscovery(IPinterpreter):
-
     def __init__(self, targets, discovery_type, icmp_type=8, timeout=0.1, retry=0):
         super().__init__(targets)
         self.discovery_type=discovery_type
@@ -18,20 +14,7 @@ class HostDiscovery(IPinterpreter):
         self.timeout=timeout
         self.retry=retry
 
-    #https://en.wikipedia.org/wiki/List_of_DNS_record_types
-    def get_domain_info(self):
-        try:
-            IPinterpreter.IPcalc(self)
-            domain_name = socket.gethostbyaddr(self._targets)
-            ans = sr1(IP(dst='8.8.8.8')/UDP(dport=53)/DNS(rd=1, qd=DNSQR(qname=domain_name[0])),timeout=self.timeout, retry=self.retry, verbose=False)
-            ans[DNS].show()
-        except:
-            ans = sr1(IP(dst='8.8.8.8')/UDP(dport=53)/DNS(rd=1, qd=DNSQR(qname=self._targets)), timeout=self.timeout, retry=self.retry, verbose=False)
-            if ans is None:
-                print('Error')
-            else:
-                ans[DNS].show()
-
+    #ICMP ping
     #https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-codes-0
     def icmp_ping(self):
         print("Ping on %s" %(self._targets))
@@ -59,26 +42,30 @@ class HostDiscovery(IPinterpreter):
         else:
             print('Host is up')
             ans.show()
-            
+
+    #Traceroute    
     def traceroute(self):
         ans, unans = traceroute(target=self._targets, verbose=False, timeout=self.timeout)
         if ans is None:
             print('Unreachable or filtered, reply not arrived')
         else:
             ans.show()
-        
 
+    #Arp ping
     def arp_ping(self):
-        ans, unans = arping(net=self._targets, verbose=False, timeout=self.timeout)
+        ans, unans = sr(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=self._targets), verbose=False, timeout=self.timeout)
         if ans is None:
             print('Unreachable or filtered, reply not arrived')
         else:
-            ans.show()
-        
+            for sent, received in ans:
+                print('IP:{}   MAC:{}'.fomat(received.psrc,received.hwsrc))
+
+    #Dict to enumarate
     def host_for(self):
-        discovery_type = { 'ARPing' : self.arp_ping, 'Trace' : self.traceroute, 'ICMPing' : self.icmp_ping, 'DomainInfo' : self.get_domain_info}
+        discovery_type = { 'ARPing' : self.arp_ping, 'Trace' : self.traceroute, 'ICMPing' : self.icmp_ping}
         discovery_type.get(self.discovery_type)()
 
+    #Discovery scanner interpreter
     def discovery_scanner(self):
         print('Scanning started...'+datetime.now().strftime("%H:%M:%S"))
         base='' #operation on octets in IP address to iterate range

@@ -1,10 +1,11 @@
 import logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
-from scapy.arch import str2mac
 from scapy.layers.inet import IP, UDP, TCP, ICMP
 from scapy.sendrecv import sr1
 from scapy.volatile import RandShort
 from .IPinterpreter import IPinterpreter
+import socket
+import re
 from datetime import datetime
 
 class PortScanner(IPinterpreter):
@@ -30,7 +31,8 @@ class PortScanner(IPinterpreter):
 
         'Maimon' : { None : 'Port open OR filtered', 4 : 'Port closed'}}
 
-    def __init__(self, targets, ports, type_scan = 'TCP', type_tcp = 'SYN', set_flags = 0, specific_result=True, timeout=0.1, retry=0):
+    def __init__(self, targets, ports, type_scan = 'TCP', type_tcp = 'SYN', set_flags = 0, 
+                 specific_result=True, grab_banner = False, timeout=0.1, retry=0):
         #Inherit class of interpreting ip address given in string for example 192.168.0.32/28
         super().__init__(targets)
         self.__ports = ports
@@ -38,6 +40,7 @@ class PortScanner(IPinterpreter):
         self.__type_tcp = type_tcp
         self.__set_flags = set_flags
         self.__specific_result = specific_result  #displaying or not unclear answers like 'open or filtered'
+        self.__grab_banner = grab_banner
         self.__timeout = timeout
         self.__retry = retry
 
@@ -84,16 +87,22 @@ class PortScanner(IPinterpreter):
         
         if type(self.__ports) == int:
             scan_type.get(self.__type_scan)()
+            if self.__grab_banner == True:
+                print(self.retBanner())
 
         elif self.__ports[-1] == True:
             for port in range(temp_list[0], temp_list[1]+1):
                 self.__ports=port
                 scan_type.get(self.__type_scan)()
+                if self.__grab_banner == True:
+                    print(self.retBanner())
 
         elif self.__ports[-1] == False:
             for port in temp_list[:-1]:
                 self.__ports=port
                 scan_type.get(self.__type_scan)()
+                if self.__grab_banner == True:
+                    print(self.retBanner())
         else:
             print('Error')
             exit()
@@ -248,6 +257,25 @@ class PortScanner(IPinterpreter):
         except (TypeError, AttributeError):
             print('Any packet received')
 
+    #Get banner with socket
+    def retBanner(self):
+        socket.setdefaulttimeout(10)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        data = {22:f'SSH-2.0-MySSHClient\r\n', 80:f'GET / HTTP/1.1\r\nHost: {self._targets}\r\n\r\n', 443:f'GET / HTTP/1.1\r\nHost: {self._targets}\r\n\r\n',
+                21:f'SYST\r\n', 8080:f'GET / HTTP/1.1\r\nHost: {self._targets}\r\n\r\n'}
+        try:
+            sock.connect((self._targets, self.__ports))
+            sock.send(data[self.__ports].encode())
+            banner = sock.recv(2048)
+            sock.close()
+            if self.__ports == 80 or self.__ports == 443 or self.__ports == 8080:
+                pattern = re.compile(r"^Server:.*", re.MULTILINE)
+                banner = pattern.findall(banner.decode('utf-8'))
+                return banner[0]
+            return banner.decode('utf-8')
+        except:
+            return 'Cant grab banner'
+        
     #main function to scan 
     def scanner(self):
         print('Scanning started...'+datetime.now().strftime("%H:%M:%S"))
