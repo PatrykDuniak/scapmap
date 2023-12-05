@@ -4,6 +4,7 @@ import os
 import zipfile
 import hashlib
 import time
+import datetime
 import re
 from urllib.parse import urljoin
 from .IPinterpreter import IPinterpreter
@@ -60,11 +61,12 @@ class WebScrapper(IPinterpreter):
                 print(f"Download misc: {tag_url}")
                 download_file(tag_url, folder_name)
 
-        print("Pobieranie zakończone!")
+        print("Download completed!")
 
         # Create zip
-        timestamp = str(int(time.time()))  # Timestamp
-        zip_filename = hash_object.hexdigest()[:10] + '_' + timestamp + '.zip'
+        timestamp = str(datetime.datetime.now())
+        re_timestamp = re.sub(r'[^a-zA-Z0-9]', '', timestamp)  # Timestamp
+        zip_filename = hash_object.hexdigest()[:10] + '_' + re_timestamp + '.zip'
         with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for root, dirs, files in os.walk(folder_name):
                 for file in files:
@@ -75,6 +77,7 @@ class WebScrapper(IPinterpreter):
         with open(html_filename, 'rb') as f:
             file_hash = hashlib.sha256(f.read()).hexdigest()
 
+        print(f"Timestamp: '{timestamp}'")
         print(f"Archive '{zip_filename}' was created.")
         print(f"Checksum SHA256: '{file_hash}'")
         print(f"Remeber to encrypt file with strong algorithm and key!")
