@@ -2,9 +2,10 @@ import logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.layers.inet import  IP, ICMP, traceroute 
 from scapy.layers.l2 import Ether, ARP
-from scapy.sendrecv import sr1, sr
+from scapy.sendrecv import sr1, srp
 from .IPinterpreter import IPinterpreter
 from datetime import datetime
+import sys
 
 class HostDiscovery(IPinterpreter):
     def __init__(self, targets, discovery_type, icmp_type=8, timeout=0.1, retry=0):
@@ -53,12 +54,12 @@ class HostDiscovery(IPinterpreter):
 
     #Arp ping
     def arp_ping(self):
-        ans, unans = sr(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=self._targets), verbose=False, timeout=self.timeout)
+        print("ARP Ping on %s" %(self._targets))
+        ans, unans = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=self._targets),verbose=False, timeout=self.timeout)
         if ans is None:
             print('Unreachable or filtered, reply not arrived')
         else:
-            for sent, received in ans:
-                print('IP:{}   MAC:{}'.fomat(received.psrc,received.hwsrc))
+            ans.summary(lambda s,r: r.sprintf("%Ether.src% %ARP.psrc%") )
 
     #Dict to enumarate
     def host_for(self):
@@ -71,45 +72,50 @@ class HostDiscovery(IPinterpreter):
         base='' #operation on octets in IP address to iterate range
         self._targets=range_ip=self.IPcalc() #change string range of IP address to first and last address
 
-        if type(range_ip) == str:   #if IPcalc didn't change anything that means it is single address
-            self.host_for()
+        try:
+            if type(range_ip) == str:   #if IPcalc didn't change anything that means it is single address
+                self.host_for()
 
-        else:
-            range_ip[0] = range_ip[0].split('.')    #spliting IP address to list with octets 
-            range_ip[1] = range_ip[1].split('.')    
-            
-            for oct in range(4):
-                if range_ip[0][oct] == range_ip[1][oct]:    
-                    continue 
+            else:
+                range_ip[0] = range_ip[0].split('.')    #spliting IP address to list with octets 
+                range_ip[1] = range_ip[1].split('.')    
+                
+                for oct in range(4):
+                    if range_ip[0][oct] == range_ip[1][oct]:    
+                        continue 
 
-                else:
-                    if oct == 3:   #last octet
-                        for ip in range(int(range_ip[0][oct]), int(range_ip[1][oct])+1):  #calculate range and enumarate by every address
-                            self._targets=range_ip[0][0]+'.'+range_ip[0][1]+'.'+range_ip[0][2]+'.'+str(ip)
-                            self.host_for()
-
-                    #usually we are going to scan to max /24, with more address process is more complicated
                     else:
-                        for set in range(0, oct):     
-                                base+=range_ip[0][set]+'.'
+                        if oct == 3:   #last octet
+                            for ip in range(int(range_ip[0][oct]), int(range_ip[1][oct])+1):  #calculate range and enumarate by every address
+                                self._targets=range_ip[0][0]+'.'+range_ip[0][1]+'.'+range_ip[0][2]+'.'+str(ip)
+                                self.host_for()
 
-                        for ip in range(int(range_ip[0][oct]), int(range_ip[1][oct])):
-                            if base.count('.')==0:
-                                for x in range(1, 255):
-                                    for y in range(1, 255):
-                                        for z in range(1, 255):
-                                            self._targets=str(ip)+'.'+str(x)+'.'+str(y)+'.'+str(z)
+                        #usually we are going to scan to max /24, with more address process is more complicated
+                        else:
+                            for set in range(0, oct):     
+                                    base+=range_ip[0][set]+'.'
+
+                            for ip in range(int(range_ip[0][oct]), int(range_ip[1][oct])):
+                                if base.count('.')==0:
+                                    for x in range(1, 255):
+                                        for y in range(1, 255):
+                                            for z in range(1, 255):
+                                                self._targets=str(ip)+'.'+str(x)+'.'+str(y)+'.'+str(z)
+                                                self.host_for()
+
+                                elif base.count('.')==1:
+                                    for x in range(1, 255):
+                                        for y in range(1, 255):
+                                            self._targets=base+str(ip)+'.'+str(x)+'.'+str(y)
                                             self.host_for()
 
-                            elif base.count('.')==1:
-                                for x in range(1, 255):
-                                    for y in range(1, 255):
-                                        self._targets=base+str(ip)+'.'+str(x)+'.'+str(y)
+                                else:
+                                    for x in range(1, 255):
+                                        self._targets=base+str(ip)+'.'+str(x)
                                         self.host_for()
 
-                            else:
-                                for x in range(1, 255):
-                                    self._targets=base+str(ip)+'.'+str(x)
-                                    self.host_for()
+        except:
+            print("Error in iteration of hosts")
+            pass                         
 
         print('Scanning ended...'+datetime.now().strftime("%H:%M:%S"))

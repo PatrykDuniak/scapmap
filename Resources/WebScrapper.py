@@ -51,18 +51,9 @@ class WebScrapper(IPinterpreter):
         with open(html_filename, 'w', encoding='utf-8') as html_file:
             html_file.write(response.text)
 
-        # Download images
-        img_tags = soup.find_all('img')
-        for img_tag in img_tags:
-            img_url = img_tag.get('src')
-            if img_url:
-                img_url = urljoin(url, img_url)
-                print(f"Download image: {img_url}")
-                download_file(img_url, folder_name)
-
-        # Download other things
-        other_tags = soup.find_all(['audio', 'video', 'source', 'link'])
-        for tag in other_tags:
+        # Download  things
+        tags = soup.find_all(['img', 'audio', 'video', 'source', 'link'])
+        for tag in tags:
             tag_url = tag.get('href') or tag.get('src')
             if tag_url and not tag_url.endswith('.js'):  # SKIP JS
                 tag_url = urljoin(url, tag_url)

@@ -283,49 +283,54 @@ class PortScanner(IPinterpreter):
         self._targets=range_ip=self.IPcalc() #change string range of IP address to first and last address
         temp_port = self.__ports
 
-        if type(range_ip) == str:   #if IPcalc didn't change anything that means it is single address
-            self.portFor()
+        try:
+            if type(range_ip) == str:   #if IPcalc didn't change anything that means it is single address
+                self.portFor()
 
-        else:
-            range_ip[0] = range_ip[0].split('.')    #spliting IP address to list with octets 
-            range_ip[1] = range_ip[1].split('.')    
-            
-            for oct in range(4):
-                if range_ip[0][oct] == range_ip[1][oct]:    
-                    continue 
+            else:
+                range_ip[0] = range_ip[0].split('.')    #spliting IP address to list with octets 
+                range_ip[1] = range_ip[1].split('.')    
+                
+                for oct in range(4):
+                    if range_ip[0][oct] == range_ip[1][oct]:    
+                        continue 
 
-                else:
-                    if oct == 3:   #last octet
-                        for ip in range(int(range_ip[0][oct]), int(range_ip[1][oct])+1):  #calculate range and enumarate by every address
-                            self._targets=range_ip[0][0]+'.'+range_ip[0][1]+'.'+range_ip[0][2]+'.'+str(ip)
-                            self.__ports = temp_port
-                            self.portFor()
-
-                    #usually we are going to scan to max /24, with more address process is more complicated
                     else:
-                        for set in range(0, oct):     
-                                base+=range_ip[0][set]+'.'
+                        if oct == 3:   #last octet
+                            for ip in range(int(range_ip[0][oct]), int(range_ip[1][oct])+1):  #calculate range and enumarate by every address
+                                self._targets=range_ip[0][0]+'.'+range_ip[0][1]+'.'+range_ip[0][2]+'.'+str(ip)
+                                self.__ports = temp_port
+                                self.portFor()
 
-                        for ip in range(int(range_ip[0][oct]), int(range_ip[1][oct])):
-                            if base.count('.')==0:
-                                for x in range(1, 255):
-                                    for y in range(1, 255):
-                                        for z in range(1, 255):
-                                            self._targets=str(ip)+'.'+str(x)+'.'+str(y)+'.'+str(z)
+                        #usually we are going to scan to max /24, with more address process is more complicated
+                        else:
+                            for set in range(0, oct):     
+                                    base+=range_ip[0][set]+'.'
+
+                            for ip in range(int(range_ip[0][oct]), int(range_ip[1][oct])):
+                                if base.count('.')==0:
+                                    for x in range(1, 255):
+                                        for y in range(1, 255):
+                                            for z in range(1, 255):
+                                                self._targets=str(ip)+'.'+str(x)+'.'+str(y)+'.'+str(z)
+                                                self.__ports = temp_port
+                                                self.portFor()
+
+                                elif base.count('.')==1:
+                                    for x in range(1, 255):
+                                        for y in range(1, 255):
+                                            self._targets=base+str(ip)+'.'+str(x)+'.'+str(y)
                                             self.__ports = temp_port
                                             self.portFor()
 
-                            elif base.count('.')==1:
-                                for x in range(1, 255):
-                                    for y in range(1, 255):
-                                        self._targets=base+str(ip)+'.'+str(x)+'.'+str(y)
+                                else:
+                                    for x in range(1, 255):
+                                        self._targets=base+str(ip)+'.'+str(x)
                                         self.__ports = temp_port
                                         self.portFor()
-
-                            else:
-                                for x in range(1, 255):
-                                    self._targets=base+str(ip)+'.'+str(x)
-                                    self.__ports = temp_port
-                                    self.portFor()
+            
+        except:
+            print("Error in iteration of hosts")
+            pass                                    
 
         print('Scanning ended...'+datetime.now().strftime("%H:%M:%S"))
