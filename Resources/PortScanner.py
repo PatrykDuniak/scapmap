@@ -1,7 +1,7 @@
 import logging
 logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 from scapy.layers.inet import IP, UDP, TCP, ICMP
-from scapy.sendrecv import sr1
+from scapy.sendrecv import sr1, send
 from scapy.volatile import RandShort
 from .IPinterpreter import IPinterpreter
 import socket
@@ -137,6 +137,10 @@ class PortScanner(IPinterpreter):
 
         #calling Scapy function sr1(send and receive 1)
         ans=sr1(IP(dst=self._targets)/TCP(sport=RandShort(), dport=self.__ports, flags=pick.get(self.__type_tcp)), timeout=self.__timeout, retry=self.__retry, verbose=False)
+        
+        if (self.__type_tcp == 'SYN') and (not isinstance(ans, type(None))):
+            send(IP(dst=self._targets)/TCP(sport=RandShort(), dport=self.__ports, flags=4), verbose=False)
+        
         #analyze answers from Scapy function and printing results
         if self.__specific_result == True:
             try:
